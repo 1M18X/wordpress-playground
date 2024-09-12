@@ -26,8 +26,11 @@ import { ReportError } from '../../toolbar-buttons/report-error';
 import { RestoreFromZipMenuItem } from '../../toolbar-buttons/restore-from-zip';
 import { TemporarySiteNotice } from '../temporary-site-notice';
 import { SitePersistButton } from '../site-persist-button';
-import { SiteInfo } from '../../../lib/state/redux/slice-sites';
-import { setSiteManagerOpen } from '../../../lib/state/redux/slice-ui';
+import { removeSite, SiteInfo } from '../../../lib/state/redux/slice-sites';
+import {
+	setSiteManagerOpen,
+	setSiteManagerSection,
+} from '../../../lib/state/redux/slice-ui';
 import { selectClientInfoBySiteSlug } from '../../../lib/state/redux/slice-clients';
 import { encodeStringAsBase64 } from '../../../lib/base64';
 
@@ -49,15 +52,11 @@ function SiteInfoRow({
 export function SiteInfoPanel({
 	className,
 	site,
-	removeSite,
 	mobileUi,
-	onBackButtonClick,
 }: {
 	className: string;
 	site: SiteInfo;
-	removeSite: (site: SiteInfo) => Promise<void>;
 	mobileUi?: boolean;
-	onBackButtonClick?: () => void;
 }) {
 	const offline = useAppSelector((state) => state.ui.offline);
 	const removeSiteAndCloseMenu = async (onClose: () => void) => {
@@ -66,7 +65,7 @@ export function SiteInfoPanel({
 			`Are you sure you want to delete the site '${site.metadata.name}'?`
 		);
 		if (proceed) {
-			await removeSite(site);
+			await dispatch(removeSite(site.slug));
 			onClose();
 		}
 	};
@@ -130,7 +129,13 @@ export function SiteInfoPanel({
 												/>
 											)}
 											className={css.grayLinkDark}
-											onClick={onBackButtonClick}
+											onClick={() => {
+												dispatch(
+													setSiteManagerSection(
+														'sidebar'
+													)
+												);
+											}}
 										/>
 									</FlexItem>
 								)}

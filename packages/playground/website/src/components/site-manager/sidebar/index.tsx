@@ -21,6 +21,7 @@ import {
 import { useMemo } from 'react';
 import { SiteCreateButton } from '../site-create-button';
 import { SiteLogo } from '../../../lib/site-metadata';
+import { setSiteManagerSection } from '../../../lib/state/redux/slice-ui';
 
 export function Sidebar({
 	className,
@@ -43,8 +44,13 @@ export function Sidebar({
 	const activeSite = useActiveSite()!;
 	const dispatch = useAppDispatch();
 
+	const activeSiteManagerSection = useAppSelector(
+		(state) => state.ui.siteManagerSection
+	);
+
 	const onSiteClick = (slug: string) => {
 		dispatch(setActiveSite(slug));
+		dispatch(setSiteManagerSection('site-details'));
 		afterSiteClick?.(slug);
 	};
 
@@ -107,7 +113,9 @@ export function Sidebar({
 								className={classNames(css.sidebarItem, {
 									[css.sidebarItemSelected]: isSelected,
 								})}
-								onClick={() => onSiteClick(site.slug)}
+								onClick={() => {
+									onSiteClick(site.slug);
+								}}
 								isSelected={isSelected}
 								// eslint-disable-next-line jsx-a11y/aria-role
 								role=""
@@ -150,6 +158,29 @@ export function Sidebar({
 							</MenuItem>
 						);
 					})}
+				</MenuGroup>
+				<Heading
+					level="2"
+					className={classNames(
+						css.sidebarLabel,
+						css.sidebarListLabel
+					)}
+				>
+					Other features
+				</Heading>
+				<MenuGroup className={css.sidebarList}>
+					<MenuItem
+						className={classNames(css.sidebarItem, {
+							[css.sidebarItemSelected]:
+								activeSiteManagerSection === 'blueprints',
+						})}
+						onClick={() =>
+							dispatch(setSiteManagerSection('blueprints'))
+						}
+						isSelected={activeSiteManagerSection === 'blueprints'}
+					>
+						Blueprints
+					</MenuItem>
 				</MenuGroup>
 			</nav>
 			<footer
