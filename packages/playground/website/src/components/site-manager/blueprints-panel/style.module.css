@@ -8,6 +8,17 @@
 	border-radius: var(--site-manager-border-radius);
 	overflow: hidden;
 	max-width: 600px;
+	width: 500px;
+}
+
+/* Hide the Blueprint thumbnail. It doesn't seem possible with the component props. */
+.blueprints-panel :global(.dataviews-view-list__primary-field),
+.blueprints-panel :global(.dataviews-view-list__media-wrapper) {
+	display: none;
+}
+.blueprints-panel :global(.dataviews-view-list__fields) {
+	flex-direction: column;
+	gap: 12px;
 }
 
 .padded {
@@ -36,4 +47,10 @@
 
 	/* Gutenberg/Gray 900 */
 	color: var(--color-gray-900);
+}
+
+.blueprint-title {
+	display: block;
+	width: 100%;
+	margin: 0;
 }

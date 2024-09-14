@@ -5,6 +5,7 @@ import {
 	FlexItem,
 	Spinner,
 	__experimentalText as Text,
+	__experimentalVStack as VStack,
 } from '@wordpress/components';
 import { DataViews } from '@wordpress/dataviews';
 import type { Field, View } from '@wordpress/dataviews';
@@ -38,20 +39,56 @@ export function BlueprintsPanel({
 
 	const [view, setView] = useState<View>({
 		type: 'list',
-		fields: ['title', 'description', 'author', 'actions'],
+		fields: ['header', 'description', 'actions'],
 	});
 
-	const indexEntries: BlueprintsIndexEntry[] = data
+	let indexEntries: BlueprintsIndexEntry[] = data
 		? Object.entries(data).map(([path, entry]) => ({ ...entry, path }))
 		: [];
 
+	if (view.search) {
+		indexEntries = indexEntries.filter((entry) => {
+			return [entry.title, entry.description]
+				.join(' ')
+				.toLocaleLowerCase()
+				.includes(view.search!.toLocaleLowerCase());
+		});
+	}
+
+	function previewBlueprint(blueprintPath: BlueprintsIndexEntry['path']) {
+		redirectTo(
+			PlaygroundRoute.newTemporarySite({
+				query: {
+					'blueprint-url': joinPaths(
+						'https://raw.githubusercontent.com/WordPress/blueprints/trunk/',
+						blueprintPath
+					),
+				},
+			})
+		);
+	}
+
 	const fields: Field<BlueprintsIndexEntry>[] = [
 		{
-			id: 'title',
-			label: 'Title',
+			id: 'header',
+			label: 'Header',
 			enableHiding: false,
 			render: ({ item }) => {
-				return <h3>{item.title}</h3>;
+				return (
+					<VStack spacing={0}>
+						<h3 className={css.blueprintTitle}>{item.title}</h3>
+						<Text>
+							By{' '}
+							<a
+								target="_blank"
+								rel="noreferrer"
+								href={`https://github.com/${item.author}`}
+							>
+								{item.author}
+							</a>
+						</Text>
+					</VStack>
+				);
 			},
 		},
 		{
@@ -62,35 +99,11 @@ export function BlueprintsPanel({
 			},
 		},
 		{
-			id: 'author',
-			label: 'Author',
-			render: ({ item }) => {
-				return <Text>{item.author}</Text>;
-			},
-		},
-		{
 			id: 'actions',
 			label: 'Actions',
 			render: ({ item }) => {
-				return (
-					<Button
-						variant="primary"
-						onClick={() => {
-							redirectTo(
-								PlaygroundRoute.newTemporarySite({
-									query: {
-										'blueprint-url': joinPaths(
-											'https://raw.githubusercontent.com/WordPress/blueprints/trunk/',
-											item.path
-										),
-									},
-								})
-							);
-						}}
-					>
-						Preview
-					</Button>
-				);
+				// Action handled by onChangeSelection
+				return <Button variant="primary">Preview</Button>;
 			},
 		},
 	];
@@ -117,31 +130,37 @@ export function BlueprintsPanel({
 						</p>
 					</>
 				</FlexItem>
-				<FlexItem
-					style={{ alignSelf: 'stretch', overflowY: 'scroll' }}
-					className={css.padded}
-				>
-					{isLoading ? (
-						<Spinner />
-					) : isError ? (
-						<p>Error – TODO explain the details</p>
-					) : (
-						<DataViews<BlueprintsIndexEntry>
-							data={indexEntries as BlueprintsIndexEntry[]}
-							view={view}
-							onChangeView={setView}
-							isLoading={isLoading}
-							fields={fields}
-							getItemId={(item) => item.path}
-							paginationInfo={{
-								totalItems: indexEntries.length,
-								totalPages: 1,
-							}}
-							defaultLayouts={{
-								list: {},
-							}}
-						/>
-					)}
+				<FlexItem style={{ alignSelf: 'stretch', overflowY: 'scroll' }}>
+					<div className={css.padded}>
+						{isLoading ? (
+							<Spinner />
+						) : isError ? (
+							<p>Error – TODO explain the details</p>
+						) : (
+							<DataViews<BlueprintsIndexEntry>
+								data={indexEntries as BlueprintsIndexEntry[]}
+								view={view}
+								onChangeView={setView}
+								onChangeSelection={(newSelection) => {
+									if (newSelection?.length) {
+										previewBlueprint(newSelection[0]);
+									}
+								}}
+								search={true}
+								isLoading={isLoading}
+								fields={fields}
+								header={null}
+								getItemId={(item) => item?.path}
+								paginationInfo={{
+									totalItems: indexEntries.length,
+									totalPages: 1,
+								}}
+								defaultLayouts={{
+									list: {},
+								}}
+							/>
+						)}
+					</div>
 				</FlexItem>
 			</Flex>
 		</section>
